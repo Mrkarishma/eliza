@@ -8,14 +8,15 @@ import {
     ModelClass,
     stringToUuid,
     UUID,
-    generateImage
+    generateImage,
+    Content
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
 import { postActionResponseFooter } from "@elizaos/core";
 import { generateTweetActions } from "@elizaos/core";
 import { IImageDescriptionService, ServiceType } from "@elizaos/core";
-import { buildConversationThread } from "./utils.ts";
+import { buildConversationThread,sendTweet } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 
@@ -396,12 +397,23 @@ export class TwitterPostClient {
 
                 console.log("Image data being sent:", imageData);
 
-                result = await client.requestQueue.add(
-                    async () => await client.twitterClient.sendTweet(
+                const content: Content = {
+                    text: "ni hao", // 设置推文的文本内容
+                    attachments: [
                         {
-                            text: 'hi hao',
-                            mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000',
+                            url: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000'
                         }
+                    ]
+                };
+
+
+                result = await client.requestQueue.add(
+                    async () => await sendTweet(
+                        client,
+                        content,
+                        roomId,
+                        twitterUsername,
+                        undefined
                 ));
 
                 // mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000'
