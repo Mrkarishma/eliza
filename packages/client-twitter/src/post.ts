@@ -649,12 +649,9 @@ export class TwitterPostClient {
                     console.error("Error generating image:", error);
                 }
 
-                elizaLogger.log("Generate image response:", images);
-
                 if (images.success && images.data && images.data.length > 0) {
                     elizaLogger.log("Image generation successful");
                     // Convert base64 to buffer
-                    console.log("images.data:",images.data[0]);
 
                     imageBuffer = Buffer.from(
                         images.data[0].replace(/^data:image\/\w+;base64,/, ""),
