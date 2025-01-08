@@ -185,9 +185,10 @@ export async function sendTweet(
         let mediaData: { data: Buffer; mediaType: string }[] | undefined;
 
         if (content.attachments && content.attachments.length > 0) {
-            console.log("content.attachments");
+            console.log("content.attachments",content.attachments);
             mediaData = await Promise.all(
                 content.attachments.map(async (attachment: Media) => {
+                    console.log("attachment.url",attachment.url);
                     if (/^(http|https):\/\//.test(attachment.url)) {
                         // Handle HTTP URLs
                         const response = await fetch(attachment.url);
