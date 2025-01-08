@@ -385,45 +385,57 @@ export class TwitterPostClient {
             let result;
 
             try {
-                // result = await client.twitterClient.sendTweet(
-                //     "",
-                //     undefined,
-                //     imageData ? [imageData] : undefined
-                // );
-                // [{
-                //     data: imageData,
-                //     mediaType: 'image/png'
-                // }]
+            //     const content: Content = {
+            //         text: "ni hao", // 设置推文的文本内容
+            //         attachments: [
+            //             {
+            //                 url: 'https://cdn.pixabay.com/photo/2024/05/26/15/27/kid-8788962_1280.jpg',
+            //                 contentType: 'image/jpg'
+            //             }
+            //         ]
+            //     };
 
-                console.log("Image data being sent:", imageData);
+            //    const responseMessages =await sendTweet(
+            //         client,
+            //         content,
+            //         roomId,
+            //         twitterUsername,
+            //         undefined
+            //     )
 
-                const content: Content = {
-                    text: "ni hao", // 设置推文的文本内容
-                    attachments: [
-                        {
-                            url: 'https://cdn.pixabay.com/photo/2024/05/26/15/27/kid-8788962_1280.jpg',
-                            contentType: 'image/jpg'
-                        }
-                    ]
-                };
+                // for (const responseMessage of responseMessages) {
+                //     await this.runtime.messageManager.createMemory(
+                //         responseMessage,
+                //         false
+                //     );
+                // }
+                let mediaData = [{
+                      data: imageData,
+                      mediaType: 'image/png'
+                }]
 
-               const responseMessages =await sendTweet(
-                    client,
-                    content,
-                    roomId,
-                    twitterUsername,
-                    undefined
-                )
-
-                for (const responseMessage of responseMessages) {
-                    await this.runtime.messageManager.createMemory(
-                        responseMessage,
-                        false
-                    );
-                }
-                // mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000'
-
+                const standardTweetResult = await client.twitterClient.sendTweet(newTweetContent, undefined, mediaData)
                 console.log("Processing tweet response...");
+                const body = await standardTweetResult.json();
+                    if (!body?.data?.create_tweet?.tweet_results?.result) {
+                        console.error("Error sending tweet; Bad response:", body);
+                        return;
+                    }
+                result = await body.data.create_tweet.tweet_results.result;
+
+                const tweet = this.createTweetObject(
+                    result,
+                    client,
+                    twitterUsername
+                );
+
+                await this.processAndCacheTweet(
+                    runtime,
+                    client,
+                    tweet,
+                    roomId,
+                    newTweetContent
+                );
             } catch (error) {
                 elizaLogger.error("Error sending standard Tweet:", error);
                 if (error.response) {
@@ -660,7 +672,6 @@ export class TwitterPostClient {
 
             try {
                 if(imageBuffer) {
-                    console.log("imageBuffer: ", imageBuffer);
                     this.postImageTweet(
                         this.runtime,
                         this.client,
