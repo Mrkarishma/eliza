@@ -406,26 +406,23 @@ export class TwitterPostClient {
                     ]
                 };
 
+               const responseMessages =await sendTweet(
+                    client,
+                    content,
+                    roomId,
+                    twitterUsername,
+                    undefined
+                )
 
-                result = await client.requestQueue.add(
-                    async () => await sendTweet(
-                        client,
-                        content,
-                        roomId,
-                        twitterUsername,
-                        undefined
-                ));
-
+                for (const responseMessage of responseMessages) {
+                    await this.runtime.messageManager.createMemory(
+                        responseMessage,
+                        false
+                    );
+                }
                 // mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000'
 
                 console.log("Processing tweet response...");
-                const body = await result.json();
-                if (!body?.data?.create_tweet?.tweet_results?.result) {
-                    console.error("Error sending tweet; Bad response:", body);
-                    return;
-                }
-
-                result = body.data.create_tweet.tweet_results.result;
             } catch (error) {
                 elizaLogger.error("Error sending standard Tweet:", error);
                 if (error.response) {
@@ -436,21 +433,7 @@ export class TwitterPostClient {
                 throw error;
             }
 
-            elizaLogger.log("Successfully posted image to Twitter:", result);
-
-            const tweet = this.createTweetObject(
-                result,
-                client,
-                twitterUsername
-            );
-
-            await this.processAndCacheTweet(
-                runtime,
-                client,
-                tweet,
-                roomId,
-                newTweetContent
-            );
+            elizaLogger.log("Successfully posted image to Twitter:");
         } catch (error) {
             elizaLogger.error("Error sending tweet:", error);
         }

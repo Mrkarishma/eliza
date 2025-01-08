@@ -179,10 +179,13 @@ export async function sendTweet(
     const sentTweets: Tweet[] = [];
     let previousTweetId = inReplyTo;
 
+    console.log("tweetChunks", tweetChunks);
+
     for (const chunk of tweetChunks) {
         let mediaData: { data: Buffer; mediaType: string }[] | undefined;
 
         if (content.attachments && content.attachments.length > 0) {
+            console.log("content.attachments");
             mediaData = await Promise.all(
                 content.attachments.map(async (attachment: Media) => {
                     if (/^(http|https):\/\//.test(attachment.url)) {
@@ -213,16 +216,23 @@ export async function sendTweet(
                 })
             );
         }
+
+        console.log("mediaData", mediaData);
+
         const result = await client.requestQueue.add(async () =>
             isLongTweet
                 ? client.twitterClient.sendLongTweet(chunk.trim(), previousTweetId, mediaData)
                 : client.twitterClient.sendTweet(chunk.trim(), previousTweetId, mediaData)
         );
 
+        console.log("Processing tweet response...");
+
         const body = await result.json();
         const tweetResult = isLongTweet
             ? body.data.notetweet_create.tweet_results.result
             : body.data.create_tweet.tweet_results.result;
+
+        elizaLogger.log("Successfully posted image to Twitter:", tweetResult);
 
         // if we have a response
         if (tweetResult) {
