@@ -384,12 +384,14 @@ export class TwitterPostClient {
             let result;
 
             try {
-                const standardTweetResult = await client.requestQueue.add(
-                    async () =>
-                        await client.twitterClient.sendTweet("", undefined,imageData ? [imageData] : undefined)
+                result = await client.twitterClient.sendTweet(
+                    "",
+                    undefined,
+                    imageData ? [imageData] : undefined
                 );
 
-                const body = await standardTweetResult.json();
+                console.log("Processing tweet response...");
+                const body = await result.json();
                 if (!body?.data?.create_tweet?.tweet_results?.result) {
                     console.error("Error sending tweet; Bad response:", body);
                     return;
