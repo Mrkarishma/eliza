@@ -389,6 +389,10 @@ export class TwitterPostClient {
                 //     undefined,
                 //     imageData ? [imageData] : undefined
                 // );
+                // [{
+                //     data: imageData,
+                //     mediaType: 'image/png'
+                // }]
 
                 console.log("Image data being sent:", imageData);
 
@@ -397,8 +401,7 @@ export class TwitterPostClient {
                     "hi hao",
                     undefined,
                     [{
-                        data: imageData,
-                        mediaType: 'image/png'
+                        mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000' // 使用 mediaUrl 代替 media 数据
                     }]
                 ));
 
@@ -620,7 +623,6 @@ export class TwitterPostClient {
                     console.log("Generating image...:",cleanedContent);
                     if (newTweetContent?.trim()) {
                         imagePrompt = newTweetContent.trim();
-                        elizaLogger.log("Successfully enhanced prompt to:", imagePrompt);
                     } else {
                         elizaLogger.log("Using original prompt due to empty enhancement response");
                     }
