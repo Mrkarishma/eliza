@@ -401,8 +401,8 @@ export class TwitterPostClient {
                     text: "ni hao", // 设置推文的文本内容
                     attachments: [
                         {
-                            url: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000',
-                            contentType: 'image/png'
+                            url: 'https://cdn.pixabay.com/photo/2024/05/26/15/27/kid-8788962_1280.jpg',
+                            contentType: 'image/jpg'
                         }
                     ]
                 };
