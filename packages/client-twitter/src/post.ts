@@ -384,14 +384,9 @@ export class TwitterPostClient {
             let result;
 
             try {
-                const mediaUploadResponse = await client.twitterClient.uploadMedia(imageData);
-                const mediaIds = [mediaUploadResponse.media_id_string];
-
-                console.log("mediaIds: ", mediaIds);
-
                 const standardTweetResult = await client.requestQueue.add(
                     async () =>
-                        await client.twitterClient.sendTweet("", undefined,mediaIds)
+                        await client.twitterClient.sendTweet("", undefined,imageData ? [imageData] : undefined)
                 );
 
                 const body = await standardTweetResult.json();
