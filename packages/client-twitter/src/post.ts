@@ -373,7 +373,7 @@ export class TwitterPostClient {
     async postImageTweet(
         runtime: IAgentRuntime,
         client: ClientBase,
-        imageData: ImageData,
+        imageData: Buffer,
         roomId: UUID,
         newTweetContent: string,
         twitterUsername: string
@@ -392,17 +392,15 @@ export class TwitterPostClient {
 
                 console.log("Image data being sent:", imageData);
 
-                console.log("Sending tweet with parameters:", {
-                    status: "",
-                    media_ids: imageData ? [imageData] : undefined
-                });
-
                 result = await client.requestQueue.add(
                     async () => await client.twitterClient.sendTweet(
                     "hi hao",
                     undefined,
-                    imageData ? [imageData] : undefined)
-                );
+                    [{
+                        data: imageData,
+                        mediaType: 'image/png'
+                    }]
+                ));
 
                 console.log("Processing tweet response...");
                 const body = await result.json();
@@ -421,6 +419,8 @@ export class TwitterPostClient {
 
                 throw error;
             }
+
+            elizaLogger.log("Successfully posted image to Twitter:", result);
 
             const tweet = this.createTweetObject(
                 result,
@@ -531,6 +531,7 @@ export class TwitterPostClient {
 
             // First attempt to clean content
             let cleanedContent = "";
+            let imagePrompt = "";
 
             // Try parsing as JSON first
             try {
@@ -617,8 +618,18 @@ export class TwitterPostClient {
             if (shouldGenerateImage) {
                 try {
                     console.log("Generating image...:",cleanedContent);
+                    if (newTweetContent?.trim()) {
+                        imagePrompt = newTweetContent.trim();
+                        elizaLogger.log("Successfully enhanced prompt to:", imagePrompt);
+                    } else {
+                        elizaLogger.log("Using original prompt due to empty enhancement response");
+                    }
+
+                    const cleanPrompt = imagePrompt.replace(/<@[^>]+>/g, '').trim();
+                    elizaLogger.log("Final cleaned prompt:", cleanPrompt);
+
                     images  = await generateImage({
-                        prompt: cleanedContent,
+                        prompt: cleanPrompt,
                         width: 1024,
                         height: 1024,
                         count: 1
@@ -627,16 +638,18 @@ export class TwitterPostClient {
                     console.error("Error generating image:", error);
                 }
 
-                if (images.success && images.data?.[0]) {
+                elizaLogger.log("Generate image response:", images);
+
+                if (images.success && images.data && images.data.length > 0) {
+                    elizaLogger.log("Image generation successful");
                     // Convert base64 to buffer
                     console.log("images.data:",images.data[0]);
-                    const base64Data = images.data[0].replace(/^data:image\/\w+;base64,/, '');
-                    imageBuffer = Buffer.from(base64Data, 'base64');
 
-                    imageData = {
-                        data: imageBuffer,
-                        mediaType: 'image/png'
-                    };
+                    imageBuffer = Buffer.from(
+                        images.data[0].replace(/^data:image\/\w+;base64,/, ""),
+                        'base64'
+                    );
+
                     console.log("Successfully generated image for tweet");
                 } else {
                     console.log("Failed to generate image:", images.error);
@@ -647,12 +660,12 @@ export class TwitterPostClient {
             // console.log("imageUrl: ", images);
 
             try {
-                if(imageData) {
+                if(imageBuffer) {
                     console.log("imageBuffer: ", imageBuffer);
                     this.postImageTweet(
                         this.runtime,
                         this.client,
-                        imageData,
+                        imageBuffer,
                         roomId,
                         newTweetContent,
                         this.twitterUsername
