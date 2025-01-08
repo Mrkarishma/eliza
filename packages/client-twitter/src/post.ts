@@ -8,6 +8,7 @@ import {
     ModelClass,
     stringToUuid,
     UUID,
+    generateImage
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
@@ -18,10 +19,10 @@ import { buildConversationThread } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 
-import {
-    generateImage,
-    generateImagePrompt,
-} from "./utils.ts";
+// import {
+//     generateImage,
+//     generateImagePrompt,
+// } from "./utils.ts";
 
 const twitterPostTemplate = `{{timeline}}
 
@@ -535,30 +536,60 @@ export class TwitterPostClient {
                 }
             }
 
-            let imageUrl = null;
+            let images = null;
+            let imageData = null;
 
             if (shouldGenerateImage) {
                 try {
-                    const imagePrompt = await generateImagePrompt(cleanedContent, this.runtime.getSetting("OPENAI_API_KEY"));
-                    imageUrl = await generateImage(imagePrompt, this.runtime.getSetting("OPENAI_API_KEY"));
+                    images  = await generateImage({
+                        prompt: cleanedContent,
+                        width: 1024,
+                        height: 1024,
+                        count: 1
+                    }, this.runtime);
                 } catch (error) {
                     console.error("Error generating image:", error);
+                }
+
+                if (images.success && images.data?.[0]) {
+                    // Convert base64 to buffer
+                    const base64Data = images.data[0].replace(/^data:image\/\w+;base64,/, '');
+                    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+                    imageData = {
+                        data: imageBuffer,
+                        mediaType: 'image/png'
+                    };
+                    console.log("Successfully generated image for tweet");
+                } else {
+                    console.log("Failed to generate image:", images.error);
                 }
             }
 
             console.log("shouldGenerateImage: ", shouldGenerateImage);
-            console.log("imageUrl: ", imageUrl);
+            // console.log("imageUrl: ", images);
 
             try {
-                elizaLogger.log(`Posting new tweet:\n ${cleanedContent}`);
-                this.postTweet(
-                    this.runtime,
-                    this.client,
-                    cleanedContent,
-                    roomId,
-                    newTweetContent,
-                    this.twitterUsername
-                );
+                if(imageData) {
+                    this.postTweet(
+                        this.runtime,
+                        this.client,
+                        imageData,
+                        roomId,
+                        newTweetContent,
+                        this.twitterUsername
+                    );
+                }else {
+                    elizaLogger.log(`Posting new tweet:\n ${cleanedContent}`);
+                    this.postTweet(
+                        this.runtime,
+                        this.client,
+                        cleanedContent,
+                        roomId,
+                        newTweetContent,
+                        this.twitterUsername
+                    );
+                }
             } catch (error) {
                 elizaLogger.error("Error sending tweet:", error);
             }
