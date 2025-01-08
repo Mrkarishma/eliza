@@ -72,6 +72,10 @@ Tweet:
 
 # Respond with qualifying action tags only. Default to NO action unless extremely confident of relevance.` + postActionResponseFooter;
 
+interface ImageData {
+    data: Buffer; // 假设 data 是一个 Buffer 对象
+    mediaType: string; // 媒体类型，例如 'image/png'
+}
 
 /**
  * Truncate text to fit within the Twitter character limit, ensuring it ends at a complete sentence.
@@ -366,6 +370,60 @@ export class TwitterPostClient {
         }
     }
 
+    async postImageTweet(
+        runtime: IAgentRuntime,
+        client: ClientBase,
+        imageData: ImageData,
+        roomId: UUID,
+        newTweetContent: string,
+        twitterUsername: string
+    ) {
+        try {
+            elizaLogger.log(`Posting new image tweet:\n`);
+
+            let result;
+
+            try {
+                const mediaUploadResponse = await client.twitterClient.uploadMedia(imageData);
+                const mediaIds = [mediaUploadResponse.media_id_string];
+
+                console.log("mediaIds: ", mediaIds);
+
+                const standardTweetResult = await client.requestQueue.add(
+                    async () =>
+                        await client.twitterClient.sendTweet("", undefined,mediaIds)
+                );
+
+                const body = await standardTweetResult.json();
+                if (!body?.data?.create_tweet?.tweet_results?.result) {
+                    console.error("Error sending tweet; Bad response:", body);
+                    return;
+                }
+
+                result = body.data.create_tweet.tweet_results.result;
+            } catch (error) {
+                elizaLogger.error("Error sending standard Tweet:", error);
+                throw error;
+            }
+
+            const tweet = this.createTweetObject(
+                result,
+                client,
+                twitterUsername
+            );
+
+            await this.processAndCacheTweet(
+                runtime,
+                client,
+                tweet,
+                roomId,
+                newTweetContent
+            );
+        } catch (error) {
+            elizaLogger.error("Error sending tweet:", error);
+        }
+    }
+
     async postTweet(
         runtime: IAgentRuntime,
         client: ClientBase,
@@ -571,7 +629,7 @@ export class TwitterPostClient {
 
             try {
                 if(imageData) {
-                    this.postTweet(
+                    this.postImageTweet(
                         this.runtime,
                         this.client,
                         imageData,
