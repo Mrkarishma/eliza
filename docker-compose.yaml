@@ -1,0 +1,19 @@
+services:
+    tee:
+        image: eliza:latest
+        platform: linux/amd64
+        stdin_open: true
+        tty: true
+        command: ["pnpm", "start", "--characters", "./characters/ai-artist.character.json"]
+        volumes:
+            - /var/run/tappd.sock:/var/run/tappd.sock
+            - tee:/app/packages/client-twitter/src/tweetcache
+            - tee:/app/db.sqlite
+            - ./characters:/app/characters
+            # - LIVEPEER_GATEWAY_URL=https://dream-gateway.livepeer.cloud
+        ports:
+            - "3000:80"
+        restart: always
+
+volumes:
+    tee:
