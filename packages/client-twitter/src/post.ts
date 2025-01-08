@@ -373,7 +373,7 @@ export class TwitterPostClient {
     async postImageTweet(
         runtime: IAgentRuntime,
         client: ClientBase,
-        imageData: ImageData,
+        imageData: Buffer,
         roomId: UUID,
         newTweetContent: string,
         twitterUsername: string
@@ -384,10 +384,17 @@ export class TwitterPostClient {
             let result;
 
             try {
-                result = await client.twitterClient.sendTweet(
-                    "",
+                // result = await client.twitterClient.sendTweet(
+                //     "",
+                //     undefined,
+                //     imageData ? [imageData] : undefined
+                // );
+
+                result = await client.requestQueue.add(
+                    async () => await client.twitterClient.sendTweet(
+                        "",
                     undefined,
-                    imageData ? [imageData] : undefined
+                    imageData ? [imageData] : undefined)
                 );
 
                 console.log("Processing tweet response...");
@@ -593,6 +600,7 @@ export class TwitterPostClient {
 
             let images = null;
             let imageData = null;
+            let imageBuffer = null;
 
             if (shouldGenerateImage) {
                 try {
@@ -609,7 +617,7 @@ export class TwitterPostClient {
                 if (images.success && images.data?.[0]) {
                     // Convert base64 to buffer
                     const base64Data = images.data[0].replace(/^data:image\/\w+;base64,/, '');
-                    const imageBuffer = Buffer.from(base64Data, 'base64');
+                    imageBuffer = Buffer.from(base64Data, 'base64');
 
                     imageData = {
                         data: imageBuffer,
@@ -626,10 +634,11 @@ export class TwitterPostClient {
 
             try {
                 if(imageData) {
+                    console.log("imageBuffer: ", imageBuffer);
                     this.postImageTweet(
                         this.runtime,
                         this.client,
-                        imageData,
+                        imageBuffer,
                         roomId,
                         newTweetContent,
                         this.twitterUsername
