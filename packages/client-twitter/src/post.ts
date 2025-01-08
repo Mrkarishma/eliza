@@ -373,7 +373,7 @@ export class TwitterPostClient {
     async postImageTweet(
         runtime: IAgentRuntime,
         client: ClientBase,
-        imageData: Buffer,
+        imageData: ImageData,
         roomId: UUID,
         newTweetContent: string,
         twitterUsername: string
@@ -390,9 +390,16 @@ export class TwitterPostClient {
                 //     imageData ? [imageData] : undefined
                 // );
 
+                console.log("Image data being sent:", imageData);
+
+                console.log("Sending tweet with parameters:", {
+                    status: "",
+                    media_ids: imageData ? [imageData] : undefined
+                });
+
                 result = await client.requestQueue.add(
                     async () => await client.twitterClient.sendTweet(
-                        "",
+                    "hi hao",
                     undefined,
                     imageData ? [imageData] : undefined)
                 );
@@ -407,6 +414,11 @@ export class TwitterPostClient {
                 result = body.data.create_tweet.tweet_results.result;
             } catch (error) {
                 elizaLogger.error("Error sending standard Tweet:", error);
+                if (error.response) {
+                    console.error("Error response data:", error.response.data);
+                    console.error("Error status code:", error.response.status);
+                }
+
                 throw error;
             }
 
@@ -638,7 +650,7 @@ export class TwitterPostClient {
                     this.postImageTweet(
                         this.runtime,
                         this.client,
-                        imageBuffer,
+                        imageData,
                         roomId,
                         newTweetContent,
                         this.twitterUsername
