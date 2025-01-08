@@ -616,6 +616,7 @@ export class TwitterPostClient {
 
             if (shouldGenerateImage) {
                 try {
+                    console.log("Generating image...:",cleanedContent);
                     images  = await generateImage({
                         prompt: cleanedContent,
                         width: 1024,
@@ -628,6 +629,7 @@ export class TwitterPostClient {
 
                 if (images.success && images.data?.[0]) {
                     // Convert base64 to buffer
+                    console.log("images.data:",images.data[0]);
                     const base64Data = images.data[0].replace(/^data:image\/\w+;base64,/, '');
                     imageBuffer = Buffer.from(base64Data, 'base64');
 
