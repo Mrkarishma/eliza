@@ -398,12 +398,13 @@ export class TwitterPostClient {
 
                 result = await client.requestQueue.add(
                     async () => await client.twitterClient.sendTweet(
-                    "hi hao",
-                    undefined,
-                    [{
-                        mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000' // 使用 mediaUrl 代替 media 数据
-                    }]
+                        {
+                            text: 'hi hao',
+                            mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000',
+                        }
                 ));
+
+                // mediaUrl: 'https://i.seadn.io/s/raw/files/c5bbcfac1353b1a48305b74f3cd7bd7b.jpg?auto=format&dpr=1&w=1000'
 
                 console.log("Processing tweet response...");
                 const body = await result.json();
