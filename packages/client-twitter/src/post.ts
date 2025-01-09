@@ -492,10 +492,12 @@ export class TwitterPostClient {
             elizaLogger.error("Error sending tweet:", error);
         }
     }
+
     /**
      * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
      */
     private async generateNewTweet() {
+        elizaLogger.log("agentId",this.runtime.agentId);
         elizaLogger.log("Generating new tweet");
 
         try {
